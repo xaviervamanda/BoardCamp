@@ -15,3 +15,13 @@ export async function addCustomer(req, res) {
         return res.status(500).send(err.message);
     }
 }
+
+export async function listCustomers(req, res){
+    try{
+        const customers = await db.query("SELECT id, name, phone, cpf, to_char(birthday, 'YYYY-MM-DD') as birthday FROM customers;"
+        );
+        return res.status(200).send(customers.rows);
+    } catch (err) {
+        return res.status(500).send(err.message);
+    }
+}
