@@ -26,13 +26,16 @@ export async function createRental(req, res){
     try{
         const existsCustomer = await db.query(`SELECT * FROM customers WHERE id = $1;`, [customerId]);
         if (existsCustomer.rowCount === 0) return res.status(400).send("Customer not found");
+
         const existsGame = await db.query(`SELECT * FROM games WHERE id = $1;`, [gameId]);
         if (existsGame.rowCount === 0) return res.status(400).send("Game not found");
+        const gameStock = existsGame.rows[0].stockTotal;
+
+        const rentals = await db.query(`SELECT * FROM rentals WHERE "gameId" = $1 AND "returnDate" IS null;`, [gameId]);
+        console.log(rentals.rowCount)
+        if (gameStock - rentals.rowCount === 0) return res.status(400).send("This game doesn't have enough stock");
+
         const rentalPrice = existsGame.rows[0].pricePerDay * daysRented;
-
-        // validar que existem jogos disponíveis, ou seja, 
-        // que não tem alugueis em aberto acima da quantidade de jogos em estoque.
-
         await db.query(`INSERT INTO rentals 
             ("customerId", "gameId", "daysRented", "rentDate", "originalPrice", "returnDate", "delayFee") 
             VALUES ($1, $2, $3, $4, ${rentalPrice}, null, null);`,
