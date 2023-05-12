@@ -73,10 +73,11 @@ export async function returnRental(req, res) {
         if (rental.rowCount === 0) return res.status(404).send("Rental not found");
         if (rental.rows[0].returnDate !== null) return res.status(400).send("Rental already returned");
 
-        const rentDate = rental.rows[0].rentDate.toISOString().substring(8, 10)
+        const rentDate = new Date(rental.rows[0].rentDate);
         const daysRented = rental.rows[0].daysRented;
-        const todayDate = date.slice(8,10);
-        const delayDays = todayDate - (rentDate + daysRented);
+        const returnDay = rentDate.setDate(rentDate.getDate() + daysRented);
+        let delayDays = Math.abs(today.getTime() - returnDay.getTime()) / (1000 * 60 * 60 * 24);
+        delayDays = Math.ceil(delayDays);
         if (delayDays < 0) {
             delayFee = 0;
         } else {
