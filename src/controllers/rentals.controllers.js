@@ -3,7 +3,7 @@ import {db} from "../database/database.connection.js";
 export async function listRentals(req, res) {
     try{
         const rentals = await db.query(`
-        SELECT rentals."customerId", rentals."gameId", rentals."daysRented", to_char(rentals."rentDate", 'YYYY-MM-DD') as "rentDate",
+        SELECT rentals."id",rentals."customerId", rentals."gameId", rentals."daysRented", to_char(rentals."rentDate", 'YYYY-MM-DD') as "rentDate",
         rentals."originalPrice", rentals."returnDate", rentals."delayFee", 
             JSON_BUILD_OBJECT('id', customers.id, 'name', customers.name) AS customer,
             JSON_BUILD_OBJECT('id', games.id, 'name', games.name) AS game
