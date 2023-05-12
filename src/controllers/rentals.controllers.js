@@ -2,10 +2,14 @@ import {db} from "../database/database.connection.js";
 
 export async function listRentals(req, res) {
     try{
-        // inserir o customer e o game de cada aluguel na lista de aluguéis.
-        const rentals = await db.query(`SELECT 
-            "customerId", "gameId", "daysRented", to_char("rentDate", 'YYYY-MM-DD') as "rentDate", "originalPrice", "returnDate", "delayFee" 
-            FROM rentals;`);
+        const rentals = await db.query(`
+        SELECT rentals."customerId", rentals."gameId", rentals."daysRented", to_char(rentals."rentDate", 'YYYY-MM-DD') as "rentDate",
+        rentals."originalPrice", rentals."returnDate", rentals."delayFee", 
+            JSON_BUILD_OBJECT('id', customers.id, 'name', customers.name) AS customer,
+            JSON_BUILD_OBJECT('id', games.id, 'name', games.name) AS game
+            FROM rentals
+            JOIN customers ON rentals."customerId" = customers.id
+            JOIN games ON rentals."gameId" = games.id;`);
         return res.status(200).send(rentals.rows);
 
     } catch (err){
