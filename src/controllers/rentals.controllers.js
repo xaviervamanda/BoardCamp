@@ -3,8 +3,9 @@ import {db} from "../database/database.connection.js";
 export async function listRentals(req, res) {
     try{
         const rentals = await db.query(`
-        SELECT rentals."id",rentals."customerId", rentals."gameId", rentals."daysRented", to_char(rentals."rentDate", 'YYYY-MM-DD') as "rentDate",
-        rentals."originalPrice", rentals."returnDate", rentals."delayFee", 
+        SELECT rentals."id",rentals."customerId", rentals."gameId", 
+        rentals."daysRented", to_char(rentals."rentDate", 'YYYY-MM-DD') as "rentDate",
+        rentals."originalPrice", to_char(rentals."returnDate", 'YYYY-MM-DD') as "returnDate", rentals."delayFee", 
             JSON_BUILD_OBJECT('id', customers.id, 'name', customers.name) AS customer,
             JSON_BUILD_OBJECT('id', games.id, 'name', games.name) AS game
             FROM rentals
@@ -54,6 +55,36 @@ export async function deleteRental(req, res) {
         if (rental.rowCount === 0) return res.status(404).send("Rental not found");
         if (rental.rows[0].returnDate === null) return res.status(400).send("Rental not returned yet, it can't be deleted");
         await db.query(`DELETE FROM rentals WHERE "id" = $1;`, [id]);
+        return res.sendStatus(200);
+    } catch (err){
+        return res.status(500).send(err.message);
+    }
+}
+
+export async function returnRental(req, res) {
+    const {id} = req.params;
+    
+    const today = new Date();
+    const date = today.toISOString().substring(0, 10);
+    let delayFee = 0;
+
+    try{
+        const rental = await db.query(`SELECT * FROM rentals WHERE "id" = $1;`, [id]);
+        if (rental.rowCount === 0) return res.status(404).send("Rental not found");
+        if (rental.rows[0].returnDate !== null) return res.status(400).send("Rental already returned");
+
+        const rentDate = rental.rows[0].rentDate.toISOString().substring(8, 10)
+        const daysRented = rental.rows[0].daysRented;
+        const todayDate = date.slice(8,10);
+        const delayDays = todayDate - (rentDate + daysRented);
+        if (delayDays < 0) {
+            delayFee = 0;
+        } else {
+            delayFee = delayDays * (rental.rows[0].originalPrice / daysRented);
+        }
+        
+
+        await db.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE "id" = $3;`, [date, delayFee, id]);
         return res.sendStatus(200);
     } catch (err){
         return res.status(500).send(err.message);
