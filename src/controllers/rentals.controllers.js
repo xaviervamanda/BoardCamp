@@ -77,7 +77,7 @@ export async function returnRental(req, res) {
         const daysRented = rental.rows[0].daysRented;
         const returnDay = rentDate.setDate(rentDate.getDate() + daysRented);
         let delayDays = (today.getTime() - returnDay) / (1000 * 60 * 60 * 24);
-        delayDays = Math.ceil(delayDays);
+        // delayDays = Math.ceil(delayDays);
         if (delayDays < 0) {
             delayFee = 0;
         } else {
