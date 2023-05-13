@@ -48,7 +48,7 @@ export async function updateCustomer(req, res){
         if (customer.rowCount === 0) return res.status(404).send("Customer not found");
         const customerCpf = await db.query("SELECT * FROM customers WHERE cpf = $1;", [cpf]);
         if (customerCpf.rowCount !== 0){
-            if (customerCpf.rows[0].id !== id){
+            if (customerCpf.rows[0].id !== Number(id)){
                 return res.status(409).send("CPF already registered");
             }
         }
