@@ -47,12 +47,13 @@ export async function updateCustomer(req, res){
         const customerCpf = await db.query("SELECT * FROM customers WHERE cpf = $1", [cpf]);
         if (customerCpf.rowCount !== 0){
             if (customerCpf.rows[0].id !== id){
-            return res.status(409).send("CPF already registered");
+                return res.status(409).send("CPF already registered");
             }
+            await db.query(`UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = $5`,
+            [name, phone, cpf, birthday, id]);
+            return res.sendStatus(200);
         }
-        await db.query(`UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = $5`,
-         [name, phone, cpf, birthday, id]);
-        return res.sendStatus(200);
+        
     } catch (err){
         return res.status(500).send(err.message);
     }
