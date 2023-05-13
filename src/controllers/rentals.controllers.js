@@ -63,10 +63,6 @@ export async function deleteRental(req, res) {
 
 export async function returnRental(req, res) {
     const {id} = req.params;
-    
-    const today = new Date();
-    const date = today.toISOString().substring(0, 10);
-    let delayFee = 0;
 
     try{
         const rental = await db.query(`SELECT * FROM rentals WHERE "id" = $1;`, [id]);
@@ -75,15 +71,12 @@ export async function returnRental(req, res) {
 
         const rentDate = new Date(rental.rows[0].rentDate);
         const daysRented = rental.rows[0].daysRented;
-        const returnDay = rentDate.setDate(rentDate.getDate() + daysRented);
-        let delayDays = (today.getTime() - returnDay) / (1000 * 60 * 60 * 24);
-        // delayDays = Math.ceil(delayDays);
-        if (delayDays < 0) {
-            delayFee = 0;
-        } else {
-            delayFee = delayDays * (rental.rows[0].originalPrice / daysRented);
-        }
-        
+        const returnDate = new Date(rentDate.getTime());
+        returnDate.setDate(returnDate.getDate() + daysRented);
+        const today = new Date();
+        const date = today.toISOString().substring(0, 10);
+        const delayDays = Math.floor((today.getTime() - returnDate.getTime()) / (1000 * 60 * 60 * 24));
+        const delayFee = (delayDays < 0) ? 0 : Math.floor(delayDays) * (rental.rows[0].originalPrice / daysRented);
 
         await db.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE "id" = $3;`, [date, delayFee, id]);
         return res.sendStatus(200);
